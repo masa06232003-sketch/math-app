@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>y=ax² 変化の割合シミュレーター</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#667085;--border:#d8dee9;--accent:#2563eb;--curve:#2563eb;--secant:#e8790b;--point:#dc2626;--grid:#e5e7eb}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:var(--bg);color:var(--text)}
+main{max-width:1200px;margin:auto;padding:18px}.title{text-align:center;margin:4px 0 16px}.title h1{font-size:clamp(22px,4vw,34px);margin:0}.title p{color:var(--muted);margin:6px 0 0}
+.panel,.graph-card,.note{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px}
+.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.label{font-weight:700;margin-bottom:8px}.row{display:flex;gap:10px;align-items:center}
+input[type=range]{width:100%}input[type=number]{width:90px;padding:9px;border:1px solid var(--border);border-radius:9px;font-size:16px}
+.xy{display:grid;grid-template-columns:1fr 1fr;gap:10px}.xy input{width:100%}.eq{text-align:center;font-size:25px;font-weight:800;margin-top:8px}
+.answer{font-size:21px;font-weight:800;margin-top:7px}.small{font-size:14px;color:var(--muted);line-height:1.6}.graph-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:5px}
+.graph-title{font-weight:800}.legend{font-size:13px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
+svg{display:block;width:100%;height:auto;max-height:760px}.note{line-height:1.7}.note b{display:block;margin-bottom:4px}
+@media(max-width:760px){main{padding:10px}.controls{grid-template-columns:1fr}.panel,.graph-card,.note{padding:12px}.legend{gap:8px}}
+</style>
+</head>
+<body>
+<main>
+<header class="title"><h1>y = ax²　変化の割合シミュレーター</h1><p>a と2点を変えて、グラフと変化の割合を調べよう</p></header>
+<section class="panel">
+<div class="controls">
+<div><div class="label">① a を変える</div><div class="row"><input id="aRange" type="range" min="-5" max="5" step=".1" value="1"><input id="aInput" type="number" min="-5" max="5" step=".1" value="1"></div><div id="equation" class="eq">y = x²</div></div>
+<div><div class="label">② 2点の x 座標</div><div class="xy"><label>x₁<input id="x1" type="number" min="-5" max="5" step=".5" value="-2"></label><label>x₂<input id="x2" type="number" min="-5" max="5" step=".5" value="2"></label></div></div>
+<div><div class="label">③ 変化の割合</div><div id="points" class="small"></div><div id="answer" class="answer"></div><div id="formula" class="small"></div></div>
+</div></section>
+<section class="graph-card"><div class="graph-head"><div class="graph-title">y = ax² のグラフと変化の割合</div><div class="legend"><span>● A・B</span><span>― y=ax²</span><span>--- A・Bを結ぶ直線</span></div></div><svg id="graph" viewBox="0 0 1000 680" role="img" aria-label="y=ax二乗のグラフ"></svg><div class="small" style="text-align:center">−5 ≦ x ≦ 5</div></section>
+<section class="note"><b>グラフの見方</b><span id="meaning"></span></section>
+</main>
+<script>
+(()=>{const $=id=>document.getElementById(id),ar=$("aRange"),ai=$("aInput"),i1=$("x1"),i2=$("x2"),svg=$("graph");
+const clamp=(v,l,h)=>Math.max(l,Math.min(h,v)),fmt=n=>Math.abs(n)<1e-9?"0":Number(n.toFixed(2)).toString(),read=(e,f)=>Number.isFinite(parseFloat(e.value))?parseFloat(e.value):f;
+function eq(a){if(a===0)return"y = 0";if(a===1)return"y = x²";if(a===-1)return"y = −x²";return"y = "+fmt(a)+"x²"}
+function update(){let a=clamp(read(ai,1),-5,5),p=clamp(read(i1,-2),-5,5),q=clamp(read(i2,2),-5,5);ai.value=fmt(a);ar.value=a;i1.value=fmt(p);i2.value=fmt(q);let y1=a*p*p,y2=a*q*q;$("equation").textContent=eq(a);$("points").innerHTML="A ("+fmt(p)+", "+fmt(y1)+")<br>B ("+fmt(q)+", "+fmt(y2)+")";
+if(Math.abs(q-p)<1e-9){$("answer").textContent="x₁ ≠ x₂ にしよう";$("formula").textContent=""}else{let r=(y2-y1)/(q-p);$("answer").textContent="変化の割合 = "+fmt(r);$("formula").textContent="a(x₁+x₂) = "+fmt(a)+" × ("+fmt(p)+" + "+fmt(q)+") = "+fmt(r)}
+$("meaning").textContent=Math.abs(q-p)<1e-9?"異なる2点を選ぶと、2点を結ぶ直線の傾きとして変化の割合を見ることができます。":"AとBを結ぶオレンジ色の破線の傾きが、この区間での変化の割合です。y=ax²では、その値は a(x₁+x₂) になります。";draw(a,p,q,y1,y2)}
+function draw(a,p,q,y1,y2){const W=1000,H=680,pad=62,xmin=-5,xmax=5;let ymax=Math.max(10,Math.abs(a)*25,Math.abs(y1),Math.abs(y2));ymax=Math.ceil(ymax/5)*5;let ymin=-ymax;const X=x=>pad+(x-xmin)/(xmax-xmin)*(W-2*pad),Y=y=>H-pad-(y-ymin)/(ymax-ymin)*(H-2*pad),ns="http://www.w3.org/2000/svg";svg.replaceChildren();const add=(tag,o={})=>{let e=document.createElementNS(ns,tag);Object.entries(o).forEach(([k,v])=>e.setAttribute(k,v));svg.appendChild(e);return e};
+for(let x=-5;x<=5;x++){add("line",{x1:X(x),y1:pad,x2:X(x),y2:H-pad,stroke:"#e5e7eb"});let t=add("text",{x:X(x),y:Y(0)+25,"text-anchor":"middle","font-size":15,fill:"#172033"});t.textContent=x}
+let step=ymax<=15?5:ymax<=50?10:20;for(let y=Math.ceil(ymin/step)*step;y<=ymax;y+=step){add("line",{x1:pad,y1:Y(y),x2:W-pad,y2:Y(y),stroke:"#e5e7eb"});if(y!==0){let t=add("text",{x:X(0)-10,y:Y(y)+5,"text-anchor":"end","font-size":14,fill:"#172033"});t.textContent=y}}
+add("line",{x1:pad,y1:Y(0),x2:W-pad,y2:Y(0),stroke:"#172033","stroke-width":2});add("line",{x1:X(0),y1:pad,x2:X(0),y2:H-pad,stroke:"#172033","stroke-width":2});
+let d="";for(let n=0;n<=400;n++){let x=xmin+(xmax-xmin)*n/400,y=a*x*x;d+=(n?"L":"M")+X(x)+" "+Y(y)+" "}add("path",{d,fill:"none",stroke:"#2563eb","stroke-width":4});
+if(Math.abs(q-p)>1e-9){let m=(y2-y1)/(q-p),b=y1-m*p;add("line",{x1:X(xmin),y1:Y(m*xmin+b),x2:X(xmax),y2:Y(m*xmax+b),stroke:"#e8790b","stroke-width":3,"stroke-dasharray":"11 8"})}
+[[p,y1,"A"],[q,y2,"B"]].forEach(([x,y,l])=>{add("circle",{cx:X(x),cy:Y(y),r:9,fill:"#dc2626",stroke:"#fff","stroke-width":3});let t=add("text",{x:X(x)+14,y:Y(y)-14,"font-size":18,"font-weight":"700",fill:"#172033"});t.textContent=l+" ("+fmt(x)+", "+fmt(y)+")"});
+let tx=add("text",{x:W-pad+8,y:Y(0)-10,"font-size":18,"font-weight":"700",fill:"#172033"});tx.textContent="x";let ty=add("text",{x:X(0)+12,y:pad-10,"font-size":18,"font-weight":"700",fill:"#172033"});ty.textContent="y"}
+ar.addEventListener("input",()=>{ai.value=ar.value;update()});[ai,i1,i2].forEach(e=>e.addEventListener("input",update));update()})();
+</script>
+</body>
+</html>
